@@ -196,6 +196,18 @@
       <entry value="1073741824" name="MAV_SYS_STATUS_SENSOR_PROPULSION">
         <description>0x40000000 propulsion (actuator, esc, motor or propellor)</description>
       </entry>
+      <entry value="2147483648" name="MAV_SYS_STATUS_EXTENSION_USED">
+        <description>0x80000000 Extended bit-field are used for further sensor status bits (needs to be set in onboard_control_sensors_present only)</description>
+      </entry>
+    </enum>
+    <enum name="MAV_SYS_STATUS_SENSOR_EXTENDED" bitmask="true">
+      <description>These encode the sensors whose status is sent as part of the SYS_STATUS message in the extended fields.</description>
+      <entry value="1" name="MAV_SYS_STATUS_RECOVERY_SYSTEM">
+        <description>0x01 Recovery system (parachute, balloon, retracts etc)</description>
+      </entry>
+      <entry value="2" name="MAV_SYS_STATUS_SENSOR_LEAK">
+        <description>0x02 Leak detection</description>
+      </entry>
     </enum>
     <enum name="MAV_FRAME">
       <description>Coordinate frames used by MAVLink. Not all frames are supported by all commands, messages, or vehicles.
@@ -431,9 +443,15 @@
       <entry value="8192" name="GIMBAL_DEVICE_CAP_FLAGS_HAS_RC_INPUTS">
         <description>Gimbal device supports radio control inputs as an alternative input for controlling the gimbal orientation.</description>
       </entry>
+      <entry value="65536" name="GIMBAL_DEVICE_CAP_FLAGS_CAN_POINT_LOCATION_LOCAL">
+        <description>Gimbal device supports to point to a local position.</description>
+      </entry>
+      <entry value="131072" name="GIMBAL_DEVICE_CAP_FLAGS_CAN_POINT_LOCATION_GLOBAL">
+        <description>Gimbal device supports to point to a global latitude, longitude, altitude position.</description>
+      </entry>
     </enum>
     <enum name="GIMBAL_MANAGER_CAP_FLAGS" bitmask="true">
-      <description>Gimbal manager high level capability flags (bitmap). The first 16 bits are identical to the GIMBAL_DEVICE_CAP_FLAGS. However, the gimbal manager does not need to copy the flags from the gimbal but can also enhance the capabilities and thus add flags.</description>
+      <description>Gimbal manager high level capability flags (bitmap). The flags are identical to the GIMBAL_DEVICE_CAP_FLAGS. However, the gimbal manager does not need to copy the flags from the gimbal but can also enhance the capabilities and thus add flags.</description>
       <entry value="1" name="GIMBAL_MANAGER_CAP_FLAGS_HAS_RETRACT">
         <description>Based on GIMBAL_DEVICE_CAP_FLAGS_HAS_RETRACT.</description>
       </entry>
@@ -477,10 +495,10 @@
         <description>Based on GIMBAL_DEVICE_CAP_FLAGS_HAS_RC_INPUTS.</description>
       </entry>
       <entry value="65536" name="GIMBAL_MANAGER_CAP_FLAGS_CAN_POINT_LOCATION_LOCAL">
-        <description>Gimbal manager supports to point to a local position.</description>
+        <description>Based on GIMBAL_DEVICE_CAP_FLAGS_CAN_POINT_LOCATION_LOCAL.</description>
       </entry>
       <entry value="131072" name="GIMBAL_MANAGER_CAP_FLAGS_CAN_POINT_LOCATION_GLOBAL">
-        <description>Gimbal manager supports to point to a global latitude, longitude, altitude position.</description>
+        <description>Based on GIMBAL_DEVICE_CAP_FLAGS_CAN_POINT_LOCATION_GLOBAL.</description>
       </entry>
     </enum>
     <enum name="GIMBAL_DEVICE_FLAGS" bitmask="true">
@@ -944,6 +962,44 @@
         <description>Force reboot/shutdown of the autopilot/component regardless of system state.</description>
       </entry>
     </enum>
+    <enum name="PREFLIGHT_CALIBRATION_MAGNETOMETER">
+      <description>Action for the magnetometer (param2) of MAV_CMD_PREFLIGHT_CALIBRATION.</description>
+      <entry value="0" name="PREFLIGHT_CALIBRATION_MAGNETOMETER_NONE">
+        <description>No action.</description>
+      </entry>
+      <entry value="1" name="PREFLIGHT_CALIBRATION_MAGNETOMETER_START">
+        <description>Start magnetometer calibration.</description>
+      </entry>
+      <entry value="76" name="PREFLIGHT_CALIBRATION_MAGNETOMETER_FORCE_SAVE">
+        <description>Force-accept the existing compass calibration as valid without re-running it. Useful after a parameter reload that cleared calibration validity flags.</description>
+      </entry>
+    </enum>
+    <enum name="PREFLIGHT_CALIBRATION_ACCELEROMETER">
+      <description>Action for the accelerometer (param5) of MAV_CMD_PREFLIGHT_CALIBRATION.</description>
+      <entry value="0" name="PREFLIGHT_CALIBRATION_ACCELEROMETER_NONE">
+        <description>No action.</description>
+      </entry>
+      <entry value="1" name="PREFLIGHT_CALIBRATION_ACCELEROMETER_FULL">
+        <description>Full 6-position accelerometer calibration.</description>
+      </entry>
+      <entry value="2" name="PREFLIGHT_CALIBRATION_ACCELEROMETER_TRIM">
+        <description>Board level (trim) calibration.</description>
+      </entry>
+      <entry value="3" name="PREFLIGHT_CALIBRATION_ACCELEROMETER_TEMPERATURE">
+        <description>Accelerometer temperature calibration.</description>
+      </entry>
+      <entry value="4" name="PREFLIGHT_CALIBRATION_ACCELEROMETER_SIMPLE">
+        <description>Simple accelerometer calibration.</description>
+      </entry>
+      <entry value="76" name="PREFLIGHT_CALIBRATION_ACCELEROMETER_FORCE_SAVE">
+        <description>Force-accept the existing accelerometer calibration as valid without re-running it. Useful after a parameter reload that cleared calibration validity flags.</description>
+      </entry>
+    </enum>
+    <enum name="NAV_TAKEOFF_FLAGS" bitmask="true">
+      <entry value="1" name="NAV_TAKEOFF_FLAGS_HORIZONTAL_POSITION_NOT_REQUIRED">
+        <description>Accept the command even if the autopilot does not have control over its horizontal position (note that it might not have altitude control either).</description>
+      </entry>
+    </enum>
     <!-- The MAV_CMD enum entries describe either: -->
     <!--  * the data payload of mission items (as used in the MISSION_ITEM_INT message) -->
     <!--  * the data payload of mavlink commands (as used in the COMMAND_INT and COMMAND_LONG messages) -->
@@ -1014,7 +1070,7 @@
         <description>Takeoff from ground / hand. Vehicles that support multiple takeoff modes (e.g. VTOL quadplane) should take off using the currently configured mode.</description>
         <param index="1" label="Pitch" units="deg">Minimum pitch (if airspeed sensor present), desired pitch without sensor</param>
         <param index="2">Empty</param>
-        <param index="3">Empty</param>
+        <param index="3" label="Flags" enum="NAV_TAKEOFF_FLAGS">Bitmask of options flags.</param>
         <param index="4" label="Yaw" units="deg">Yaw angle (if magnetometer present), ignored without magnetometer. NaN to use the current system yaw heading mode (e.g. yaw towards next waypoint, yaw to home, etc.).</param>
         <param index="5" label="Latitude">Latitude</param>
         <param index="6" label="Longitude">Longitude</param>
@@ -1120,6 +1176,16 @@
         INT32_MAX or NaN: Use current vehicle position, or current center if already loitering.</param>
         <param index="7" label="Altitude/Z">Center point altitude MSL/Z coordinate according to MAV_FRAME. If no MAV_FRAME specified, MAV_FRAME_GLOBAL is assumed.
         INT32_MAX or NaN: Use current vehicle altitude.</param>
+      </entry>
+      <entry value="36" name="MAV_CMD_NAV_ARC_WAYPOINT" hasLocation="true" isDestination="true">
+        <description>Circular arc path waypoint.
+          This defines the end/exit point and angle (param1) of an arc path from the previous waypoint. A position is required before this command to define the start of the arc (e.g. current position, a MAV_CMD_NAV_WAYPOINT, or a MAV_CMD_NAV_ARC_WAYPOINT).
+          The resulting path is a circular arc in the NE frame, with the difference in height being defined by the difference in waypoint altitudes.
+        </description>
+        <param index="1" label="Arc Angle" units="deg" minValue="-359" maxValue="359" increment="1">The angle in degrees from the starting position to the exit position of the arc in the NE frame. Positive values are CW arcs and negative values are CCW arcs.</param>
+        <param index="5" label="Latitude">Latitude</param>
+        <param index="6" label="Longitude">Longitude</param>
+        <param index="7" label="Altitude" units="m">Altitude</param>
       </entry>
       <entry value="80" name="MAV_CMD_NAV_ROI" hasLocation="true" isDestination="false">
         <superseded since="2018-01" replaced_by="`MAV_CMD_DO_SET_ROI_*`"/>
@@ -1742,10 +1808,10 @@
       <entry value="241" name="MAV_CMD_PREFLIGHT_CALIBRATION" hasLocation="false" isDestination="false">
         <description>Trigger calibration. This command will be only accepted if in pre-flight mode. Except for Temperature Calibration, only one sensor should be set in a single message and all others should be zero.</description>
         <param index="1" label="Gyro Temperature" minValue="0" maxValue="3" increment="1">1: gyro calibration, 3: gyro temperature calibration</param>
-        <param index="2" label="Magnetometer" enum="MAV_BOOL">Magnetometer calibration. Values not equal to 0 or 1 are invalid.</param>
+        <param index="2" label="Magnetometer" enum="PREFLIGHT_CALIBRATION_MAGNETOMETER">Magnetometer calibration action.</param>
         <param index="3" label="Ground Pressure" enum="MAV_BOOL">Ground pressure calibration. Values not equal to 0 or 1 are invalid.</param>
         <param index="4" label="Remote Control" minValue="0" maxValue="1" increment="1">1: radio RC calibration, 2: RC trim calibration</param>
-        <param index="5" label="Accelerometer" minValue="0" maxValue="4" increment="1">1: accelerometer calibration, 2: board level calibration, 3: accelerometer temperature calibration, 4: simple accelerometer calibration</param>
+        <param index="5" label="Accelerometer" enum="PREFLIGHT_CALIBRATION_ACCELEROMETER">Accelerometer calibration action.</param>
         <param index="6" label="Compmot or Airspeed" minValue="0" maxValue="2" increment="1">1: APM: compass/motor interference calibration (PX4: airspeed calibration, deprecated), 2: airspeed calibration</param>
         <param index="7" label="ESC or Baro" minValue="0" maxValue="3" increment="1">1: ESC calibration, 3: barometer temperature calibration</param>
       </entry>
@@ -2345,8 +2411,8 @@
         <param index="2" label="Approach Vector" units="deg" minValue="-1" maxValue="360">Desired approach vector in compass heading. A negative value indicates the system can define the approach vector at will.</param>
         <param index="3" label="Ground Speed" minValue="-1">Desired ground speed at release time. This can be overridden by the airframe in case it needs to meet minimum airspeed. A negative value indicates the system can define the ground speed at will.</param>
         <param index="4" label="Altitude Clearance" units="m" minValue="-1">Minimum altitude clearance to the release position. A negative value indicates the system can define the clearance at will.</param>
-        <param index="5" label="Latitude" units="degE7">Latitude. Note, if used in MISSION_ITEM (deprecated) the units are degrees (unscaled)</param>
-        <param index="6" label="Longitude" units="degE7">Longitude. Note, if used in MISSION_ITEM (deprecated) the units are degrees (unscaled)</param>
+        <param index="5" label="Latitude" units="degE7">Latitude.</param>
+        <param index="6" label="Longitude" units="degE7">Longitude.</param>
         <param index="7" label="Altitude" units="m">Altitude (MSL)</param>
       </entry>
       <entry value="30002" name="MAV_CMD_PAYLOAD_CONTROL_DEPLOY" hasLocation="false" isDestination="false">
@@ -4928,6 +4994,21 @@
         <description>Simulation is using lockstep</description>
       </entry>
     </enum>
+    <enum name="COMPUTER_STATUS_FLAGS" bitmask="true">
+      <description>Flags used to report computer status.</description>
+      <entry value="1" name="COMPUTER_STATUS_FLAGS_UNDER_VOLTAGE">
+        <description>Indicates if the system is experiencing voltage outside of acceptable range.</description>
+      </entry>
+      <entry value="2" name="COMPUTER_STATUS_FLAGS_CPU_THROTTLE">
+        <description>Indicates if CPU throttling is active.</description>
+      </entry>
+      <entry value="4" name="COMPUTER_STATUS_FLAGS_THERMAL_THROTTLE">
+        <description>Indicates if thermal throttling is active.</description>
+      </entry>
+      <entry value="8" name="COMPUTER_STATUS_FLAGS_DISK_FULL">
+        <description>Indicates if main disk is full.</description>
+      </entry>
+    </enum>
     <enum name="AIRSPEED_SENSOR_FLAGS" bitmask="true">
       <description>Airspeed sensor flags</description>
       <entry value="1" name="AIRSPEED_SENSOR_UNHEALTHY">
@@ -4954,6 +5035,10 @@
       <field type="uint16_t" name="errors_count2">Autopilot-specific errors</field>
       <field type="uint16_t" name="errors_count3">Autopilot-specific errors</field>
       <field type="uint16_t" name="errors_count4">Autopilot-specific errors</field>
+      <extensions/>
+      <field type="uint32_t" name="onboard_control_sensors_present_extended" enum="MAV_SYS_STATUS_SENSOR_EXTENDED" print_format="0x%04x">Bitmap showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present.</field>
+      <field type="uint32_t" name="onboard_control_sensors_enabled_extended" enum="MAV_SYS_STATUS_SENSOR_EXTENDED" print_format="0x%04x">Bitmap showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled.</field>
+      <field type="uint32_t" name="onboard_control_sensors_health_extended" enum="MAV_SYS_STATUS_SENSOR_EXTENDED" print_format="0x%04x">Bitmap showing which onboard controllers and sensors have an error (or are operational). Value of 0: error. Value of 1: healthy.</field>
     </message>
     <message id="2" name="SYSTEM_TIME">
       <description>The system time is the time of the sender's master clock.
@@ -6889,6 +6974,7 @@
       <field type="float" name="yaw_max" units="rad" invalid="NaN">Maximum hardware yaw angle (positive: to the right, negative: to the left). NAN if unknown.</field>
       <extensions/>
       <field type="uint8_t" name="gimbal_device_id" invalid="0">This field is to be used if the gimbal manager and the gimbal device are the same component and hence have the same component ID. This field is then set to a number between 1-6. If the component ID is separate, this field is not required and must be set to 0.</field>
+      <field type="uint32_t" name="cap_flags2" enum="GIMBAL_DEVICE_CAP_FLAGS" invalid="0">Extended bitmap of gimbal capability flags (32 bit). For backwards compatibility, the lower 16 bits should also be set in cap_flags. Ground stations should prefer this field if non-zero.</field>
     </message>
     <message id="284" name="GIMBAL_DEVICE_SET_ATTITUDE">
       <description>Low level message to control a gimbal device's attitude.
@@ -7190,6 +7276,15 @@
       <extensions/>
       <field type="float[58]" name="data">data</field>
     </message>
+    <message id="360" name="ORBIT_EXECUTION_STATUS">
+      <description>Vehicle status report that is sent out while orbit execution is in progress (see MAV_CMD_DO_ORBIT).</description>
+      <field type="uint64_t" name="time_usec" units="us">Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.</field>
+      <field type="float" name="radius" units="m">Radius of the orbit circle. Positive values orbit clockwise, negative values orbit counter-clockwise.</field>
+      <field type="uint8_t" name="frame" enum="MAV_FRAME">The coordinate system of the fields: x, y, z.</field>
+      <field type="int32_t" name="x">X coordinate of center point. Coordinate system depends on frame field: local = x position in meters * 1e4, global = latitude in degrees * 1e7.</field>
+      <field type="int32_t" name="y">Y coordinate of center point.  Coordinate system depends on frame field: local = x position in meters * 1e4, global = latitude in degrees * 1e7.</field>
+      <field type="float" name="z" units="m">Altitude of center point. Coordinate system depends on frame field.</field>
+    </message>
     <message id="370" name="SMART_BATTERY_INFO">
       <description>Smart Battery information (static/infrequent update). Use for updates from: smart battery to flight stack, flight stack to GCS. Use BATTERY_STATUS for smart battery frequent updates.</description>
       <field type="uint8_t" name="id" instance="true">Battery ID</field>
@@ -7274,6 +7369,31 @@
       <field type="uint8_t" name="operation" enum="CAN_FILTER_OP">what operation to perform on the filter list. See CAN_FILTER_OP enum.</field>
       <field type="uint8_t" name="num_ids">number of IDs in filter list</field>
       <field type="uint16_t[16]" name="ids">filter IDs, length num_ids</field>
+    </message>
+    <message id="390" name="ONBOARD_COMPUTER_STATUS">
+      <description>Hardware status sent by an onboard computer.</description>
+      <field type="uint64_t" name="time_usec" units="us">Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.</field>
+      <field type="uint32_t" name="uptime" units="ms">Time since system boot.</field>
+      <field type="uint8_t" name="type">Type of the onboard computer: 0: Mission computer primary, 1: Mission computer backup 1, 2: Mission computer backup 2, 3: Compute node, 4-5: Compute spares, 6-9: Payload computers.</field>
+      <field type="uint8_t[8]" name="cpu_cores" invalid="[UINT8_MAX]">CPU usage on the component in percent (100 - idle). A value of UINT8_MAX implies the field is unused.</field>
+      <field type="uint8_t[10]" name="cpu_combined" invalid="[UINT8_MAX]">Combined CPU usage as the last 10 slices of 100 MS (a histogram). This allows to identify spikes in load that max out the system, but only for a short amount of time. A value of UINT8_MAX implies the field is unused.</field>
+      <field type="uint8_t[4]" name="gpu_cores" invalid="[UINT8_MAX]">GPU usage on the component in percent (100 - idle). A value of UINT8_MAX implies the field is unused.</field>
+      <field type="uint8_t[10]" name="gpu_combined" invalid="[UINT8_MAX]">Combined GPU usage as the last 10 slices of 100 MS (a histogram). This allows to identify spikes in load that max out the system, but only for a short amount of time. A value of UINT8_MAX implies the field is unused.</field>
+      <field type="int8_t" name="temperature_board" units="degC" invalid="INT8_MAX">Temperature of the board. A value of INT8_MAX implies the field is unused.</field>
+      <field type="int8_t[8]" name="temperature_core" units="degC" invalid="[INT8_MAX]">Temperature of the CPU core. A value of INT8_MAX implies the field is unused.</field>
+      <field type="int16_t[4]" name="fan_speed" units="rpm" invalid="[INT16_MAX]">Fan speeds. A value of INT16_MAX implies the field is unused.</field>
+      <field type="uint32_t" name="ram_usage" units="MiB" invalid="UINT32_MAX">Amount of used RAM on the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t" name="ram_total" units="MiB" invalid="UINT32_MAX">Total amount of RAM on the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[4]" name="storage_type" invalid="[UINT32_MAX]">Storage type: 0: HDD, 1: SSD, 2: EMMC, 3: SD card (non-removable), 4: SD card (removable). A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[4]" name="storage_usage" units="MiB" invalid="[UINT32_MAX]">Amount of used storage space on the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[4]" name="storage_total" units="MiB" invalid="[UINT32_MAX]">Total amount of storage space on the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[6]" name="link_type">Link type: 0-9: UART, 10-19: Wired network, 20-29: Wifi, 30-39: Point-to-point proprietary, 40-49: Mesh proprietary</field>
+      <field type="uint32_t[6]" name="link_tx_rate" units="KiB/s" invalid="[UINT32_MAX]">Network traffic from the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[6]" name="link_rx_rate" units="KiB/s" invalid="[UINT32_MAX]">Network traffic to the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[6]" name="link_tx_max" units="KiB/s" invalid="[UINT32_MAX]">Network capacity from the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <field type="uint32_t[6]" name="link_rx_max" units="KiB/s" invalid="[UINT32_MAX]">Network capacity to the component system. A value of UINT32_MAX implies the field is unused.</field>
+      <extensions/>
+      <field type="uint16_t" name="status_flags" enum="COMPUTER_STATUS_FLAGS">Bitmap of status flags.</field>
     </message>
     <!-- Rover specific messages -->
     <message id="9000" name="WHEEL_DISTANCE">
