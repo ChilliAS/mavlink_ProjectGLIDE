@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<mavlink>
+    <include>ardupilotmega.xml</include>
+
+    <version>3</version>
+    <dialect>2</dialect>
+
+    <messages>
+        <message id="22500" name="GLIDE_SGP_CHUNK">
+            <description>Chunk of the Sparse Gaussian Process inducing grid.</description>
+            <field type="uint8_t" name="chunk_seq">Sequence number</field>
+            <field type="uint8_t" name="total_chunks">Total chunks</field>
+            <field type="float[15]" name="x_pos" units="m">Inducing Point X</field>
+            <field type="float[15]" name="y_pos" units="m">Inducing Point Y</field>
+            <field type="float[15]" name="alpha">Inducing Point Weights</field>
+            <field type="float[15]" name="variance">Inducing Point Variance</field>
+        </message>
+
+        <message id="22501" name="GLIDE_CATALOG_CHUNK">
+            <description>Chunk of the Updraft Catalogue.</description>
+            <field type="uint8_t" name="chunk_seq">Sequence number</field>
+            <field type="uint8_t" name="total_chunks">Total chunks</field>
+            <field type="float[10]" name="x_pos" units="m">Updraft X</field>
+            <field type="float[10]" name="y_pos" units="m">Updraft Y</field>
+            <field type="float[10]" name="strength" units="m/s">Core Strength</field>
+            <field type="float[10]" name="radius" units="m">Major Radius</field>
+            <field type="float[10]" name="variance">Updraft Variance</field>
+        </message>
+    </messages>
+</mavlink>
