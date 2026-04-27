@@ -44,6 +44,7 @@
     messages: 52000 - 52099
     commands: 52000 - 52099
   -->
+  <include>projectGLIDE.xml</include>
   <!--Next range to allocate range of IDs:
     messages: 52100 - ? < 60000
     commands: 52100 - ? < 60000

@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <mavlink>
-    <include>ardupilotmega.xml</include>
-
     <version>3</version>
     <dialect>2</dialect>
 
@@ -25,6 +23,53 @@
             <field type="float[10]" name="strength" units="m/s">Core Strength</field>
             <field type="float[10]" name="radius" units="m">Major Radius</field>
             <field type="float[10]" name="variance">Updraft Variance</field>
+        </message>
+        <message id="22502" name="GLIDE_MSOR">
+            <description>MSOR log record.</description>
+            <field type="uint64_t" name="time_us" units="us">Timestamp</field>
+            <field type="float" name="bank" units="deg">Commanded bank angle</field>
+            <field type="int8_t" name="thr" units="%">Commanded throttle</field>
+            <field type="float" name="tot">Total score</field>
+            <field type="float" name="mis">Mission score</field>
+            <field type="float" name="eng">Energy score</field>
+            <field type="float" name="saf">Safety score</field>
+            <field type="float" name="lam">Lambda</field>
+        </message>
+
+        <message id="22503" name="GLIDE_EVAR">
+            <description>EVAR log record.</description>
+            <field type="uint64_t" name="time_us" units="us">Timestamp</field>
+            <field type="float" name="lift" units="m/s">Filtered air lift</field>
+            <field type="float" name="conf">Estimator confidence</field>
+        </message>
+
+        <message id="22504" name="GLIDE_UPGP">
+            <description>Live equivalent of UPGP log record (one inducing point per message).</description>
+            <field type="uint64_t" name="time_us" units="us">Timestamp</field>
+            <field type="uint8_t" name="idx">Inducing point index</field>
+            <field type="int32_t" name="olat">Origin latitude (degE7)</field>
+            <field type="int32_t" name="olng">Origin longitude (degE7)</field>
+            <field type="float" name="wn" units="m/s">Wind north</field>
+            <field type="float" name="we" units="m/s">Wind east</field>
+            <field type="float" name="n" units="m">Point north</field>
+            <field type="float" name="e" units="m">Point east</field>
+            <field type="float" name="z" units="m">Point altitude</field>
+            <field type="float" name="a">Alpha weight</field>
+        </message>
+
+        <message id="22505" name="GLIDE_UPCT">
+            <description>Live equivalent of UPCT log record (one catalogue entry per message).</description>
+            <field type="uint64_t" name="time_us" units="us">Timestamp</field>
+            <field type="uint8_t" name="idx">Catalogue index</field>
+            <field type="uint8_t" name="active">Entry active flag</field>
+            <field type="uint8_t" name="type">Updraft type id</field>
+            <field type="float" name="w0" units="m/s">Core strength</field>
+            <field type="float" name="ru" units="m">Major radius</field>
+            <field type="float" name="rv" units="m">Minor radius</field>
+            <field type="float" name="hdg" units="rad">Major axis heading</field>
+            <field type="float" name="n" units="m">North position</field>
+            <field type="float" name="e" units="m">East position</field>
+            <field type="float" name="age" units="s">Age since last update</field>
         </message>
     </messages>
 </mavlink>
